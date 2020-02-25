@@ -14,6 +14,7 @@
 *.rda
 *.Rds
 *.rds
+*.Rds
 *.Pdf
 
 # Specific Files
