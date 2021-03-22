@@ -2,6 +2,9 @@
 
 # 1. Load/Append Data
 # 2. Adjust variable names
+# 3. Calculate time on road and speed
+# 4. Add entrance and exit km (mapped from plaza id)
+# 5. Export 
 
 # 1. Load/append data ----------------------------------------------------------
 # Only load in relevant variables; do when initially load dataset to minimize 
@@ -52,7 +55,7 @@ traffic_df <- traffic_df %>%
                 ent_plaza_id = ENT_PlazaID,
                 ent_occur_time = ENT_OccurTime)
 
-# 2. Calculate Time on Road and Speed ------------------------------------------
+# 3. Calculate time on road and speed ------------------------------------------
 # Remove Bad Dates and Distances
 traffic_df$ent_occur_time[substring(traffic_df$ent_occur_time, 1, 4) %in% c("1899","1900")] <- NA
 traffic_df$distance[traffic_df$distance == 0] <- NA
@@ -71,7 +74,7 @@ traffic_df$speed_km_hr  <- (traffic_df$Distance / 1000) / (traffic_df$time_on_ro
 traffic_df$speed_km_hr[traffic_df$speed_km_hr >= 300] <- NA
 traffic_df$speed_km_hr[traffic_df$speed_km_hr <= 5] <- NA
 
-# 3. Add Entrance and Exit km (mapped from Plaza ID) ---------------------------
+# 4. Add entrance and exit km (mapped from plaza id) ---------------------------
 traffic_df$entrance_km <- NA
 traffic_df$entrance_km[traffic_df$ent_plaza_id %in% 0]   <- 2
 traffic_df$entrance_km[traffic_df$ent_plaza_id %in% 101] <- 2
@@ -91,8 +94,15 @@ traffic_df$exit_km[traffic_df$plaza_id %in% 502] <- 60
 traffic_df$exit_km[traffic_df$plaza_id %in% 504] <- 60
 traffic_df$exit_km[traffic_df$plaza_id %in% 602] <- 64
 
-# 4. Export Data ---------------------------------------------------------------
+# 5. Export --------------------------------------------------------------------
 saveRDS(traffic_df, file = file.path(etre_traffic_dir, "FinalData", "traffic.Rds"))
+
+## Export limited dataset, with only select variables
+traffic_df %>%
+  dplyr::select(entrance_km, 
+                speed_km_hr, 
+                exit_km) %>%
+  saveRDS(file = file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
 
 # traffic_vars <- c("MID", # transaction ID
 #                   "Plaza_ID", # Exit Toll Plaza ID
