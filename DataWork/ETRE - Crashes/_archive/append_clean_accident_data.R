@@ -53,8 +53,7 @@ accidents_all$Fatality <- as.numeric(accidents_all$Fatality)
 table(!is.na(accidents_all$Fatality) | !is.na(accidents_all$`Serious Injury`) | !is.na(accidents_all$`Light Injury`))
 
 # Load Road Data and Convert to Points -----------------------------------------
-setwd(file.path(raw_data_file_path,"RoadNetworkPanelDataV3_1996_2016_Revised"))
-roads_2016 <- readOGR(dsn=".", "All_Network_2016")
+roads_2016 <- readOGR(dsn=file.path(raw_data_file_path,"RoadNetworkPanelDataV3_1996_2016_Revised"), "All_Network_2016")
 
 # Create Shapefile of Points Every 10 Meters Along Road
 equal_distant_projection <- paste("+proj=aeqd +lat_0=",-1.283333," +lon_0=",36.816667, sep="")
@@ -209,7 +208,7 @@ sum_temp <- accidents_all$accident_cause_simple %>% table %>% as.data.frame %>% 
 accidents_all$accident_cause_simple[accidents_all$accident_cause_simple %in% as.character(sum_temp$var[sum_temp$Freq %in% 1])] <- "Other"
 
 accidents_all$accident_cause_simple[accidents_all$accident_cause_simple %in% c("-")] <- NA
-accidents_all$accident_cause_simple[grepl("á<á|ás¨á???", accidents_all$accident_cause_simple)] <- NA
+accidents_all$accident_cause_simple[grepl("?<??|?s?????", accidents_all$accident_cause_simple)] <- NA
 accidents_all$accident_cause_simple[is.na(accidents_all$accident_cause_simple)] <- "Not Specified"
 Encoding(accidents_all$accident_cause_simple) <- "UTF-8"
 
@@ -219,8 +218,8 @@ Encoding(accidents_all$accident_type_simple) <- "latin1"
 accidents_all$accident_type_simple <- tolower(accidents_all$accident_type_simple)
 accidents_all$accident_type_simple<- trimws(accidents_all$accident_type_simple)
 
-accidents_all$accident_type_simple[accidents_all$accident_type_simple %in% c("-","á^~ás.á^¸á^«á???°á???µ")] <- NA
-accidents_all$accident_type_simple[grepl("á^~",accidents_all$accident_type_simple)] <- NA
+accidents_all$accident_type_simple[accidents_all$accident_type_simple %in% c("-","?^~?s.?^??^???????????")] <- NA
+accidents_all$accident_type_simple[grepl("?^~",accidents_all$accident_type_simple)] <- NA
 accidents_all$accident_type_simple[accidents_all$accident_type_simple %in% c("car overthrow",
                                                                              "overthrow",
                                                                              "car overtherow",
@@ -260,8 +259,8 @@ accidents_all$accident_type_simple[accidents_all$accident_type_simple %in% c("cr
                                                                              "sidecrush",
                                                                              "side crush",
                                                                              "head on crush",
-                                                                             "head on crushás¨",
-                                                                             " head on crushás¨",
+                                                                             "head on crush?s?",
+                                                                             " head on crush?s?",
                                                                              "crush with ditch",
                                                                              "crush with side dicth",
                                                                              "out of road",

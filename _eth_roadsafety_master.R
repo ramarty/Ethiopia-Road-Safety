@@ -1,17 +1,14 @@
 # Ethiopia Road Safety: Master
 
 # File Paths -------------------------------------------------------------------
-if(Sys.info()[["user"]] == "johnloesser") project_file_path <- "~/Dropbox/research/2017/ethroads/Ethiopia IE"
-if(Sys.info()[["user"]] == "robmarty") project_file_path <- "~/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
-if(Sys.info()[["user"]] == "WB521633") project_file_path <- "C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
-if(Sys.info()[["user"]] == "r521633") project_file_path <- "/home/wb521633/IEs/Ethiopia IE - Road Safety"
+if(Sys.info()[["user"]] == "robmarty") dropbox_dir <- "~/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
+if(Sys.info()[["user"]] == "WB521633") dropbox_dir <- "C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
 
-raw_data_file_path <- file.path(project_file_path,"Data","RawData")
-intermediate_data_file_path <- file.path(project_file_path,"Data","IntermediateData")
-final_data_file_path <- file.path(project_file_path,"Data","FinalData")
-tables_file_path <- file.path(project_file_path,"Results","Tables")
-figures_file_path <- file.path(project_file_path,"Results","Figures")
-code_file_path <- file.path(project_file_path, "Code", "etre_analysis")
+data_dir <- file.path(dropbox_dir, "Data")
+etre_crashes_dir <- file.path(data_dir, "ETRE - Crashes")
+etre_traffic_dir <- file.path(data_dir, "ETRE - Traffic")
+rsdp_dir         <- file.path(data_dir, "RSDP Roads")
+addisadama_express_dir <- file.path(data_dir, "Addis Adama Expressway")
 
 # Packages ---------------------------------------------------------------------
 library(sf)
@@ -23,8 +20,10 @@ library(readxl)
 library(rgdal)
 library(data.table)
 library(rgeos)
-library(doBy)
+library(haven)
 library(bit64)
+library(dplyr)
+library(data.table)
 library(ncdf4)
 library(stargazer)
 library(grid)
