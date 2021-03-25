@@ -12,16 +12,19 @@
 
 # Load 2015 to grab names; use to give same names to 2014 data, which does not
 # have variable names (has V1, V2, etc...)
-traffic_2015 <- fread(file.path(etre_traffic_dir, "RawData", "2015 AAE Traffic Research Data.csv"))
+traffic_2015 <- fread(file.path(etre_traffic_dir, "RawData", "2015 AAE Traffic Research Data.csv"), nrows = 1)
 traffic_2015_names <- names(traffic_2015)
-rm(traffic_2015)
 
 traffic_df <- file.path(etre_traffic_dir, "RawData") %>%
   list.files(full.names = T,
              pattern = ".csv") %>%
   map_df(function(path){
+    print(path)
     
-    df <- fread(path) 
+    #### 1. Load Data
+    df <- fread(path)
+    
+    #### 2. Fixes to Individual Datasets
     
     # 2014 doesn't have variable names. It has same number of columns as 2015,
     # so use those variable names
@@ -29,6 +32,20 @@ traffic_df <- file.path(etre_traffic_dir, "RawData") %>%
       names(df) <- traffic_2015_names
     }
     
+    # 2018 data has two variables with name "CarLicense", each of which contains
+    # the same values
+    if(grepl("2018 AAE Traffic Research Data.csv", path)){
+      names(df)[names(df) %in% "CarLicense"] <- c("CarLicense", "CarLicense.x")
+      df$CarLicense.x <- NULL
+    }
+    
+    # 2019 data has variable named "carlicense" when others have "CarLicense"
+    if(grepl("2019 AAE Traffic Research Data.csv", path)){
+      df <- df %>%
+        dplyr::rename(CarLicense = carlicense)
+    }
+    
+    #### 3. Select Relevant Variables
     df <- df %>%
       dplyr::select(Plaza_ID,
                     TransOccurTime,
@@ -103,19 +120,4 @@ traffic_df %>%
                 speed_km_hr, 
                 exit_km) %>%
   saveRDS(file = file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
-
-# traffic_vars <- c("MID", # transaction ID
-#                   "Plaza_ID", # Exit Toll Plaza ID
-#                   "TransOccurTime", # Transaction Time at Exit
-#                   "UpDown", #Up=0;Down=1 (direction of travel)
-#                   "CarLicense", # Hashed liscence plate
-#                   "VehType", # Vehicle Type 
-#                   "AxisNum", # Axle Number (Detected at Exit)
-#                   "Height", # Height (Detected at Exit)
-#                   "TotalWeight", # Total Weight (Detected at Exit)
-#                   "ENT_PlazaID", # Entrance Toll Plaza ID
-#                   "ENT_OccurTime", # Transaction Time at entrance
-#                   "Distance" # Distance traveled on AAE
-# )
-# 
 

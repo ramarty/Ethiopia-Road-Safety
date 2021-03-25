@@ -11,7 +11,7 @@ saveRDS(addis_adama_express, file.path(addisadama_express_dir, "Data", "addis_ad
 
 addis_adama_express %>% 
   st_as_sf() %>%
-  st_write(file.path(addisadama_express_dir, "Data", "addis_adama_express.geojson"),
+  st_write(file.path(aae_dir, "Data", "addis_adama_express.geojson"),
            delete_dsn = T)
 
 

@@ -4,11 +4,13 @@
 if(Sys.info()[["user"]] == "robmarty") dropbox_dir <- "~/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
 if(Sys.info()[["user"]] == "WB521633") dropbox_dir <- "C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
 
-data_dir <- file.path(dropbox_dir, "Data")
+## Data directories
+data_dir         <- file.path(dropbox_dir, "Data")
 etre_crashes_dir <- file.path(data_dir, "ETRE - Crashes")
 etre_traffic_dir <- file.path(data_dir, "ETRE - Traffic")
 rsdp_dir         <- file.path(data_dir, "RSDP Roads")
-addisadama_express_dir <- file.path(data_dir, "Addis Adama Expressway")
+aae_dir          <- file.path(data_dir, "Addis Adama Expressway")
+precip_dir       <- file.path(data_dir, "Precipitation")
 
 # Packages ---------------------------------------------------------------------
 library(sf)

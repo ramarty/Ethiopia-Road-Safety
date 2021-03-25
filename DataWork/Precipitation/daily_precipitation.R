@@ -1,83 +1,69 @@
-# Ethiopia Road Safety:  Daily Precipitation
+# Create Daily Precipitation File
 
-# https://www.esrl.noaa.gov/psd/data/gridded/data.cpc.globalprecip.html
-# units: mm - milimeter
-
-# Run master to setup ----------------------------------------------------------
-if(Sys.info()[["user"]] == "johnloesser") source("~/Dropbox/research/2017/ethroads/Ethiopia IE/code/etre_analysis/master.R")
-if(Sys.info()[["user"]] == "robmarty") source("~/Dropbox/Ethiopia IE - Road Safety/code/etre_analysis/master.R")
-if(Sys.info()[["user"]] == "WB521633") source("C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety/code/etre_analysis/master.R")
-
-file_path_precipitation <- file.path(raw_data_file_path,"precipitation")
+# Create dataset that shows daily precipitation around Addis-Adama expressway at 
+# daily level since 2014
 
 # Functions to Extract Data ----------------------------------------------------
-daily_precip <- function(year){
+extract_daily_precip <- function(year, file_path_precip){
+  print(year)
   
   ### Load file
-  precip.yr <- nc_open(file.path(file_path_precipitation, paste0("precip.",year,".nc")))
+  precip_yr <- nc_open(file.path(file_path_precip, paste0("precip.",year,".nc")))
   
   ### Get Coordinates
-  precip.yr.lon <- ncvar_get(precip.yr,"lon")
-  precip.yr.lat <- ncvar_get(precip.yr,"lat")
-  nlon.yr <- dim(precip.yr.lon)
-  nlat.yr <- dim(precip.yr.lat)
+  precip_yr_lon <- ncvar_get(precip_yr,"lon")
+  precip_yr_lat <- ncvar_get(precip_yr,"lat")
+  nlon_yr <- dim(precip_yr_lon)
+  nlat_yr <- dim(precip_yr_lat)
   
-  ### Get time and convert to interpretable thing
-  time.yr <- ncvar_get(precip.yr,"time")
-  n.time.yr <- dim(time.yr)
-  (tunits.yr <- ncatt_get(precip.yr,"time","units"))
-  time.yr.yyyy.mm.dd <- as.POSIXct(time.yr*3600,origin='1900-01-01 12:00:00')
-  time.yr.yyyy.mm.dd <- gsub("-", ".", time.yr.yyyy.mm.dd)
-  time.yr.yyyy.mm.dd <- paste("t.", time.yr.yyyy.mm.dd, sep="")
-  
-  ### Get Data
-  precip.yr_array <- ncvar_get(precip.yr,"precip")
+  ### Get time and convert to "yyyy-mm-dd hh:mm:ss" format
+  time_yr <- ncvar_get(precip_yr,"time")
+  n_time_yr <- dim(time_yr)
+
+  ### Get PrecipitationData
+  precip_yr_vec <- ncvar_get(precip_yr, "precip") %>% as.vector()
   
   ### Convert to Dataframe
   # Data
-  precip.yr_long <- as.vector(precip.yr_array)
-  precip.yr_mat <- matrix(precip.yr_long, nrow=nlon.yr*nlat.yr, ncol=n.time.yr)
+  precip_yr_mat <- matrix(precip_yr_vec, nrow=nlon_yr*nlat_yr, ncol=n_time_yr) %>%
+    as.data.frame()
   
   # Coordinates
-  lonlat.yr <- as.matrix(expand.grid(precip.yr.lon,precip.yr.lat))
+  lonlat_yr <- expand.grid(precip_yr_lon, precip_yr_lat) %>% 
+    as.matrix() %>%
+    as.data.frame() %>%
+    dplyr::rename(lon = Var1,
+                  lat = Var2)
   
   # Merge together
-  precip.yr.df <- data.frame(cbind(lonlat.yr,precip.yr_mat))
-  names(precip.yr.df) <- c("lon","lat",substring(time.yr.yyyy.mm.dd,1,12))
+  precip_yr_df <- bind_cols(lonlat_yr, precip_yr_mat) 
   
-  # Closest to Addis Ababa
-  #precip.yr.df[which.min(sqrt((precip.yr.df$lon - 38.74)^2 + (precip.yr.df$lat - 9.03)^2)),]
+  # Restrict to Study Area
+  precip_yr_df <- precip_yr_df[precip_yr_df$lat %in% 9.25 & precip_yr_df$lon %in% 38.75,]
+
+  # Pivot Longer
+  precip_yr_df <- precip_yr_df %>%
+    pivot_longer(cols = -c(lon, lat)) %>%
+    dplyr::rename(datetime = name)
   
-  # Stack and Select Lat/Lon
-  grab_one_day <- function(day, precip.yr.df,lat,lon){
-    precip.yr.df <- select(precip.yr.df, c("lon","lat",day))
-    names(precip.yr.df) <- c("lon","lat","precipitation")
-    precip.yr.df$day <- day
-    
-    precip.yr.df <- precip.yr.df[precip.yr.df$lon == lon & precip.yr.df$lat == lat,]
-    
-    return(precip.yr.df)
-  }
+  precip_yr_df$datetime <- as.POSIXct(as.vector(time_yr)*3600, origin='1900-01-01 12:00:00')
   
-  df_out <- lapply(names(precip.yr.df)[!(names(precip.yr.df) %in% c("lon","lat"))], grab_one_day, 
-              precip.yr.df, 9.25, 38.75) %>% bind_rows
-  
-  return(df_out)
+  return(precip_yr_df)
 }
 
-precip_2015 <- daily_precip(2015)
-precip_2016 <- daily_precip(2016)
-precip_2017 <- daily_precip(2017)
+# Process Data -----------------------------------------------------------------
+file_path_precip <- file.path(precip_dir, "RawData")
 
-precipitation <- rbind(precip_2015, precip_2016, precip_2017)
-year <- substring(precipitation$day,3,6)
-month <- substring(precipitation$day,8,9)
-day <- substring(precipitation$day,11,12)
+precip <- map_df(2014:2019, extract_daily_precip, file_path_precip)
 
-precipitation$day <- paste0(year,"-",month,"-",day)
-precipitation <- subset(precipitation, select=c(precipitation,day))
-
-precipitation$day <- precipitation$day %>% as.character %>% as.Date
+precip <- precip %>%
+  mutate(date = datetime %>% as.Date) %>%
+  dplyr::rename(precip_mm = value) %>%
+  dplyr::select(-datetime)
 
 # Export -----------------------------------------------------------------------
-save(precipitation, file = file.path(intermediate_data_file_path, "precipitation.Rda"))
+saveRDS(precip, file.path(precip_dir, "FinalData", "precipitation.Rds"))
+
+
+
+

@@ -113,7 +113,7 @@ crashes_df$ampm <- NULL
 
 # 4. Clean Location ------------------------------------------------------------
 #### ** 4.1 Create file of points every 10 meters along road #####
-addis_adama_express <- readRDS(file.path(addisadama_express_dir, "Data", "addis_adama_express.Rds"))
+addis_adama_express <- readRDS(file.path(aae_dir, "Data", "addis_adama_express.Rds"))
 
 equal_distant_projection <- paste("+proj=aeqd +lat_0=",-1.283333," +lon_0=",36.816667, sep="")
 addis_adama_express <- spTransform(addis_adama_express, CRS(equal_distant_projection)) 
