@@ -11,6 +11,8 @@ etre_traffic_dir <- file.path(data_dir, "ETRE - Traffic")
 rsdp_dir         <- file.path(data_dir, "RSDP Roads")
 aae_dir          <- file.path(data_dir, "Addis Adama Expressway")
 precip_dir       <- file.path(data_dir, "Precipitation")
+holidays_dir     <- file.path(data_dir, "Holidays")
+dailyhourly_dir  <- file.path(data_dir, "Daily Hourly Datasets")
 
 # Packages ---------------------------------------------------------------------
 library(sf)
@@ -50,8 +52,6 @@ if(F){
   
   # Analysis -------------------------------------------------------------------
   figures_maps.R
-  
 
-  
 }
 

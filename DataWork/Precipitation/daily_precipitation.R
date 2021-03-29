@@ -63,6 +63,7 @@ precip <- precip %>%
 
 # Export -----------------------------------------------------------------------
 saveRDS(precip, file.path(precip_dir, "FinalData", "precipitation.Rds"))
+write.csv(precip, file.path(precip_dir, "FinalData", "precipitation.csv"), row.names = F)
 
 
 

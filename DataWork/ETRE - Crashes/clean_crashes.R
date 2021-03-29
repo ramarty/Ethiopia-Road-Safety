@@ -20,6 +20,8 @@ crashes_df <- file.path(etre_crashes_dir, "RawData") %>%
       mutate(`Case No` = `Case No` %>% as.character,
              `Driver Age` = `Driver Age` %>% as.character)
     
+    names(df)[names(df) %in% "Accidet Date"] <- "Accident Date"
+    
     df$year <- path %>% str_replace_all(".*/", "") %>% substring(1,4)
     
     return(df)
@@ -72,7 +74,7 @@ crashes_df <- crashes_df %>%
   ## Separate crash time into hour/minute
   mutate(time_of_accident_num = time_of_accident %>%
            str_replace_all("[a-z A-Z]", "")) %>%
-  separate(col = time_of_accident_num,
+  tidyr::separate(col = time_of_accident_num,
            into = c("time_of_accident_hour", "time_of_accident_minute"),
            remove = T) %>%
   mutate(time_of_accident_minute = case_when((is.na(time_of_accident_minute) & 
@@ -142,7 +144,10 @@ crashes_df$accident_loc_dist <- lapply(crashes_df$accident_location, loc_to_dist
 # If not in Adama or Addis direction, replace with NA
 # TODO: (1) Figure out locations of others
 # TODO: (1) Should location be flipped if going towards Addis?
+crashes_df$direction <- crashes_df$direction %>% tolower()
 crashes_df$direction[!grepl("adama|addis abeba|addis", crashes_df$direction)] <- NA
+crashes_df$direction[grepl("addis", crashes_df$direction)] <- "to addis"
+crashes_df$direction[grepl("adama", crashes_df$direction)] <- "to adama"
 
 crashes_df <- merge(crashes_df,
                     addis_adama_points,

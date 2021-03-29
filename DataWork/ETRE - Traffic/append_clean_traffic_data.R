@@ -73,23 +73,23 @@ traffic_df <- traffic_df %>%
                 ent_occur_time = ENT_OccurTime)
 
 # 3. Calculate time on road and speed ------------------------------------------
-# Remove Bad Dates and Distances
+### Remove Bad Dates and Distances
 traffic_df$ent_occur_time[substring(traffic_df$ent_occur_time, 1, 4) %in% c("1899","1900")] <- NA
 traffic_df$distance[traffic_df$distance == 0] <- NA
 
-# Time on Road
+### Time on Road
 traffic_df$time_on_road <- difftime(traffic_df$trans_occur_time, traffic_df$ent_occur_time, units = "mins") %>% as.numeric
 
 # Remove Bad "Time on Road" Values [something wrong with how recorded dates]
 traffic_df$time_on_road[traffic_df$time_on_road <= 0] <- NA # what timeframe is unreasonable?
 traffic_df$time_on_road[traffic_df$time_on_road > 60*24] <- NA # what timeframe is unreasonable?
 
-# Speed
-traffic_df$speed_km_hr  <- (traffic_df$Distance / 1000) / (traffic_df$time_on_road / 60)
+### Speed
+traffic_df$speed_km_hr  <- (traffic_df$distance / 1000) / (traffic_df$time_on_road / 60)
 
 # Remove Bad Speeds
 traffic_df$speed_km_hr[traffic_df$speed_km_hr >= 300] <- NA
-traffic_df$speed_km_hr[traffic_df$speed_km_hr <= 5] <- NA
+traffic_df$speed_km_hr[traffic_df$speed_km_hr <= 2] <- NA
 
 # 4. Add entrance and exit km (mapped from plaza id) ---------------------------
 traffic_df$entrance_km <- NA
@@ -111,12 +111,19 @@ traffic_df$exit_km[traffic_df$plaza_id %in% 502] <- 60
 traffic_df$exit_km[traffic_df$plaza_id %in% 504] <- 60
 traffic_df$exit_km[traffic_df$plaza_id %in% 602] <- 64
 
-# 5. Export --------------------------------------------------------------------
+# 5. Add Other Variables -------------------------------------------------------
+traffic_df$direction <- ifelse(traffic_df$ent_plaza_id < traffic_df$plaza_id, "to addis", "to adama")
+
+
+# 6. Export --------------------------------------------------------------------
 saveRDS(traffic_df, file = file.path(etre_traffic_dir, "FinalData", "traffic.Rds"))
 
 ## Export limited dataset, with only select variables
 traffic_df %>%
   dplyr::select(entrance_km, 
+                ent_occur_time,
+                trans_occur_time,
+                direction,
                 speed_km_hr, 
                 exit_km) %>%
   saveRDS(file = file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))

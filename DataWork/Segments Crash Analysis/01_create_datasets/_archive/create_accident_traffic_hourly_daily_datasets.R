@@ -1,37 +1,62 @@
 # Ethiopia Road Safety: Merge Accident and Traffic Data into Daily and Hourly Datasets
 
-# Run master to setup ----------------------------------------------------------
-if(Sys.info()[["user"]] == "johnloesser") source("~/Dropbox/research/2017/ethroads/Ethiopia IE/code/etre_analysis/master.R")
-if(Sys.info()[["user"]] == "robmarty") source("~/Dropbox/Ethiopia IE - Road Safety/code/etre_analysis/master.R")
-if(Sys.info()[["user"]] == "WB521633") source("C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety/code/etre_analysis/master.R")
-
 # Load Data --------------------------------------------------------------------
-load(file.path(intermediate_data_file_path, "accident_data.Rda"))
-load(file.path(intermediate_data_file_path, "traffic_data.Rda"))
-load(file.path(intermediate_data_file_path, "precipitation.Rda"))
-
-# Functions --------------------------------------------------------------------
-daily_summary_subset <- function(df, var, value, newvar, coll_type){
-  df_subset <- df[df[[var]] %in% value,]
-  df_subset$N <- 1
-  if(coll_type == "sum") df_subset <- summaryBy(N ~ day, data=df_subset, FUN=sum, keep.names=T)
-  if(coll_type == "mean") df_subset <- summaryBy(N ~ day, data=df_subset, FUN=mean, keep.names=T)
-  df_subset <- df_subset[!is.na(df_subset$N),]
-  names(df_subset) <- c("day", newvar)
-  return(df_subset)
-}
-
-hourly_summary_subset <- function(df, var, value, newvar, coll_type){
-  df_subset <- df[df[[var]] %in% value,]
-  df_subset$N <- 1
-  if(coll_type == "sum") df_subset <- summaryBy(N ~ dayhour, data=df_subset, FUN=sum, keep.names=T)
-  if(coll_type == "mean") df_subset <- summaryBy(N ~ dayhour, data=df_subset, FUN=mean, keep.names=T)
-  df_subset <- df_subset[!is.na(df_subset$N),]
-  names(df_subset) <- c("dayhour", newvar)
-  return(df_subset)
-}
+crashes_df <- readRDS(file.path(etre_crashes_dir, "FinalData", "crashes.Rds"))
+traffic_df <- readRDS(file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
 
 # Prep Datasets ----------------------------------------------------------------
+traffic_df <- traffic_df %>%
+  dplyr::select(trans_occur_time,
+                speed_km_hr,
+                direction) %>%
+  filter(!is.na(trans_occur_time),
+         trans_occur_time >= as.Date("2015-01-01"),
+         !is.na(direction)) %>%
+  mutate(date     = trans_occur_time %>% round_date(unit = "day"),
+         date_hour = trans_occur_time %>% round_date(unit = "hour"),
+         one = 1)
+
+crashes_df <- crashes_df %>%
+  filter(!is.na(direction)) %>%
+  mutate(date_hour = accident_datetime %>% round_date(unit = "hour")) %>%
+  dplyr::rename(date = accident_date)
+
+# Collapse Data ----------------------------------------------------------------
+#### Traffic
+traffic_hourly_df <- traffic_df[, list(N_vehicles = sum(one),
+                                       speed_mean = mean(speed_km_hr, na.rm = T), 
+                                       speed_p10 = as.numeric(quantile(speed_km_hr, probs = 0.1, na.rm = T)),
+                                       speed_p25 = as.numeric(quantile(speed_km_hr, probs = 0.25, na.rm = T)),
+                                       speed_p50 = as.numeric(quantile(speed_km_hr, probs = 0.5, na.rm = T)),
+                                       speed_p75 = as.numeric(quantile(speed_km_hr, probs = 0.75, na.rm = T)),
+                                       speed_p90 = as.numeric(quantile(speed_km_hr, probs = 0.9, na.rm = T))), 
+                                by = list(date_hour, direction)]  %>%
+  as.data.frame()
+
+traffic_daily_df <- traffic_df[, list(N_vehicles = sum(one),
+                                      speed_mean = mean(speed_km_hr, na.rm = T), 
+                                       speed_p10 = as.numeric(quantile(speed_km_hr, probs = 0.1, na.rm = T)),
+                                       speed_p25 = as.numeric(quantile(speed_km_hr, probs = 0.25, na.rm = T)),
+                                       speed_p50 = as.numeric(quantile(speed_km_hr, probs = 0.5, na.rm = T)),
+                                       speed_p75 = as.numeric(quantile(speed_km_hr, probs = 0.75, na.rm = T)),
+                                       speed_p90 = as.numeric(quantile(speed_km_hr, probs = 0.9, na.rm = T))), 
+                                by = list(date, direction)] %>%
+  as.data.frame()
+
+#### Crashes
+crashes_hourly_df <- crashes_df %>%
+  filter(!is.na(date_hour)) %>%
+  group_by(date_hour, direction) %>%
+  dplyr::summarise(N_crashes = n())
+
+
+
+
+head(traffic_df)
+traffic_df$trans_occur_time %>% is.na %>% table
+traffic_df$ent_occur_time   %>% is.na %>% table
+traffic_df$speed_km_hr %>% is.na %% table
+
 
 # Traffic
 traffic_all$day <- traffic_all$ENT_OccurTime %>% substring(1,10)
@@ -297,7 +322,7 @@ holidays <- c("2015-01-07",
               "2017-09-11",
               "2017-09-27",
               "2017-12-01"
-              )
+)
 
 holidays <- as.Date(holidays)
 holidays_1day_buff <- c(holidays, (holidays-1), (holidays+1))
@@ -312,7 +337,7 @@ dataset_hours_long$holidays_1day_buff <- (dataset_hours_long$day %in% holidays_1
 # Moving Window Averages -------------------------------------------------------
 moving_avg_accident_traffic <- function(i, dataset_days_long, time_var, window, type){
   dataset_days_long_i <- dataset_days_long[i,]
-
+  
   dataset_days_long_window <- dataset_days_long[dataset_days_long$direction %in% dataset_days_long_i$direction,]
   dataset_days_long_window <- dataset_days_long_window[dataset_days_long_window[[time_var]] %in% (dataset_days_long_i[[time_var]]-window):(dataset_days_long_i[[time_var]]+window),]
   
@@ -323,7 +348,7 @@ moving_avg_accident_traffic <- function(i, dataset_days_long, time_var, window, 
                   mean(dataset_days_long_window$speed_perc_0.75),
                   mean(dataset_days_long_window$speed_perc_0.9),
                   mean(dataset_days_long_window$traffic)) %>% 
-            as.data.frame
+    as.data.frame
   
   if(type == "days") MA_window <- window*2+1
   if(type == "hours") MA_window <- window/(60*60)*2+1 
