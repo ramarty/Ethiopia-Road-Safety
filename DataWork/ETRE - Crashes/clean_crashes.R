@@ -22,6 +22,10 @@ crashes_df <- file.path(etre_crashes_dir, "RawData") %>%
     
     names(df)[names(df) %in% "Accidet Date"] <- "Accident Date"
     
+    names(df) <- names(df) %>% str_squish()
+    #names(df)[names(df) %in% "Vehicle  Brand"] <- "Vehicle Brand"
+    #names(df)[names(df) %in% "Vehicle  Brand"] <- "Vehicle Brand"
+    
     df$year <- path %>% str_replace_all(".*/", "") %>% substring(1,4)
     
     return(df)
@@ -34,35 +38,6 @@ names(crashes_df) <- names(crashes_df) %>%
   str_replace_all(" ", "_") %>%
   str_replace_all("\\(v\\)", "") %>%
   str_replace_all("_$", "")
-
-## Deal with nearly duplicate variable names
-# vehicle_brand
-table(!is.na(crashes_df$vehicle_brand) & !is.na(crashes_df$vehicle__brand)) # Never both not NA at same time
-
-crashes_df$vehicle_brand[!is.na(crashes_df$vehicle__brand)] <- 
-  crashes_df$vehicle__brand[!is.na(crashes_df$vehicle__brand)]
-
-crashes_df$vehicle__brand <- NULL
-
-# drivers_license_level
-table(!is.na(crashes_df$drivers_license_level) & !is.na(crashes_df$drivers_license__level)) # Never both not NA at same time
-
-crashes_df$drivers_license_level[!is.na(crashes_df$drivers_license__level)] <- 
-  crashes_df$drivers_license__level[!is.na(crashes_df$drivers_license__level)]
-
-crashes_df$drivers_license__level <- NULL
-
-# license_region
-table(!is.na(crashes_df$license_region) & !is.na(crashes_df$license__region)) # Never both not NA at same time
-
-crashes_df$license_region[!is.na(crashes_df$license__region)] <- 
-  crashes_df$license__region[!is.na(crashes_df$license__region)]
-
-crashes_df$license__region <- NULL
-
-## Remove "__" from variable names; need to do now after deal with nearly
-# duplicate names
-names(crashes_df) <- names(crashes_df) %>% str_replace_all("__","_")
 
 ## Individual changes
 crashes_df <- crashes_df %>%
@@ -114,21 +89,13 @@ crashes_df$time_of_accident <- NULL
 crashes_df$ampm <- NULL
 
 # 4. Clean Location ------------------------------------------------------------
-#### ** 4.1 Create file of points every 10 meters along road #####
-addis_adama_express <- readRDS(file.path(aae_dir, "Data", "addis_adama_express.Rds"))
+## Load expressway point
+addis_adama_points <- readRDS(file.path(aae_dir, "Data", "addis_adama_express_points.Rds"))
 
-equal_distant_projection <- paste("+proj=aeqd +lat_0=",-1.283333," +lon_0=",36.816667, sep="")
-addis_adama_express <- spTransform(addis_adama_express, CRS(equal_distant_projection)) 
+addis_adama_points <- addis_adama_points %>%
+  dplyr::select(distance_from_addis, latitude, longitude)
 
-num_points <- gLength(addis_adama_express) / 10
-addis_adama_points <- spsample(addis_adama_express, n = num_points, type = "regular")
-addis_adama_points <- spTransform(addis_adama_points, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")) 
-addis_adama_points <- as.data.frame(addis_adama_points)
-names(addis_adama_points) <- c("longitude","latitude")
-
-addis_adama_points$distance_adama_direction <- (1:nrow(addis_adama_points))*10
-
-#### ** 4.2 Calculate Distance from Addis #####
+## Calculate distance from Addis for crashes
 loc_to_distance <- function(loc){
   loc <- strsplit(loc, "\\+")[[1]]
   loc <- as.numeric(loc)
@@ -139,24 +106,10 @@ loc_to_distance <- function(loc){
   return(loc.dist)
 }
 
-crashes_df$accident_loc_dist <- lapply(crashes_df$accident_location, loc_to_distance) %>% unlist
+crashes_df$distance_from_addis <- map_dbl(crashes_df$accident_location, loc_to_distance)
 
-# If not in Adama or Addis direction, replace with NA
-# TODO: (1) Figure out locations of others
-# TODO: (1) Should location be flipped if going towards Addis?
-crashes_df$direction <- crashes_df$direction %>% tolower()
-crashes_df$direction[!grepl("adama|addis abeba|addis", crashes_df$direction)] <- NA
-crashes_df$direction[grepl("addis", crashes_df$direction)] <- "to addis"
-crashes_df$direction[grepl("adama", crashes_df$direction)] <- "to adama"
-
-crashes_df <- merge(crashes_df,
-                    addis_adama_points,
-                    by.x = "accident_loc_dist",
-                    by.y = "distance_adama_direction",
-                    all.x = T,
-                    all.y = F)
-
-crashes_df$accident_loc_dist <- NULL
+## Merge by distance_from_addis
+crashes_df <- merge(crashes_df, addis_adama_points, by = "distance_from_addis", all.x=T, all.y=F)
 
 # 5. Variable Clean ------------------------------------------------------------
 # Cleanup individual variables
@@ -191,6 +144,14 @@ crashes_df <- crashes_df %>%
                                         vehicle_type %in% 5 ~ "4",
                                         vehicle_type %in% 6 ~ "5",
                                         vehicle_type %in% 7 ~ ">5"))
+
+# If not in Adama or Addis direction, replace with NA
+# TODO: (1) Figure out locations of others
+# TODO: (1) Should location be flipped if going towards Addis?
+crashes_df$direction <- crashes_df$direction %>% tolower()
+crashes_df$direction[!grepl("adama|addis abeba|addis", crashes_df$direction)] <- NA
+crashes_df$direction[grepl("addis", crashes_df$direction)] <- "to addis"
+crashes_df$direction[grepl("adama", crashes_df$direction)] <- "to adama"
 
 # 6. Simplify Variables --------------------------------------------------------
 # Sometimes character variables list multiple things; this simplifies the categories
@@ -275,7 +236,7 @@ crashes_df <- crashes_df %>%
                                              "crush with guard rail",
                                              "crush with guardrail",
                                              "cross median guardrail",
-                                             "crush with guardrail፡",
+                                             "crush with guardrail???",
                                              "crush with guardrail",
                                              "crushed with guardrail",
                                              "crush guardrail") ~ "crash with gaurdrail",
@@ -320,7 +281,7 @@ crashes_df <- crashes_df %>%
                                              "ford crush pickup",
                                              "near to near crushed",
                                              "isuzu crushothers",
-                                             "head on crushከ",
+                                             "head on crush???",
                                              "ivco crush fuel truck",
                                              "back crush") ~ "crash, other",
                      type_of_accident %in% c("front & back",

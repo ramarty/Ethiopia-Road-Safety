@@ -4,6 +4,8 @@
 if(Sys.info()[["user"]] == "robmarty") dropbox_dir <- "~/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
 if(Sys.info()[["user"]] == "WB521633") dropbox_dir <- "C:/Users/wb521633/Dropbox/World Bank/IEs/Ethiopia IE - Road Safety"
 
+if(Sys.info()[["user"]] == "robmarty") github_dir <- "~/Documents/Github/Ethiopia-Road-Safety"
+
 ## Data directories
 data_dir         <- file.path(dropbox_dir, "Data")
 etre_crashes_dir <- file.path(data_dir, "ETRE - Crashes")
@@ -13,6 +15,9 @@ aae_dir          <- file.path(data_dir, "Addis Adama Expressway")
 precip_dir       <- file.path(data_dir, "Precipitation")
 holidays_dir     <- file.path(data_dir, "Holidays")
 dailyhourly_dir  <- file.path(data_dir, "Daily Hourly Datasets")
+
+## Github Directories
+functions_dir <- file.path(github_dir, "Functions")
 
 # Packages ---------------------------------------------------------------------
 library(sf)
@@ -34,6 +39,8 @@ library(grid)
 library(gridExtra)
 library(xtable)
 library(ggmap)
+
+source(file.path(functions_dir, "turning_angle.R"))
 
 # Run Scripts ------------------------------------------------------------------
 if(F){

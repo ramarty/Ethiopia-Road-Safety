@@ -1,10 +1,10 @@
 # Ethiopia Road Safety: Merge Accident and Traffic Data into Daily and Hourly Datasets
 
 # Load Data --------------------------------------------------------------------
-crashes_df <- readRDS(file.path(etre_crashes_dir, "FinalData", "crashes.Rds"))
-traffic_df <- readRDS(file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
-precip_df  <- readRDS(file.path(precip_dir, "FinalData", "precipitation.Rds"))
-holidays_df  <- read.csv(file.path(holidays_dir, "RawData", "eth_holidays.csv"))
+crashes_df  <- readRDS(file.path(etre_crashes_dir, "FinalData", "crashes.Rds"))
+traffic_df  <- readRDS(file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
+precip_df   <- readRDS(file.path(precip_dir, "FinalData", "precipitation.Rds"))
+holidays_df <- read.csv(file.path(holidays_dir, "RawData", "eth_holidays.csv"))
 
 # Prep Datasets ----------------------------------------------------------------
 traffic_df <- traffic_df %>%
