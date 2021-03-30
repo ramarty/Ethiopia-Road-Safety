@@ -143,6 +143,8 @@ hourly_df <- hourly_df[hourly_df$date >= min_traffic_date,]
 saveRDS(daily_df,  file.path(dailyhourly_dir, "FinalData", "daily.Rds"))
 saveRDS(hourly_df, file.path(dailyhourly_dir, "FinalData", "hourly.Rds"))
 
+write_dta(daily_df,  file.path(dailyhourly_dir, "FinalData", "daily.dta"))
+write_dta(hourly_df, file.path(dailyhourly_dir, "FinalData", "hourly.dta"))
 
 
 
