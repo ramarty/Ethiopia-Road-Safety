@@ -1,0 +1,12 @@
+name: crash-dashboard
+title: crash-dashboard
+username:
+account: ethiopiaroadsafety
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 802638
+bundleId: 2361165
+url: https://ethiopiaroadsafety.shinyapps.io/crash-dashboard/
+when: 1566938425.24239
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,25 @@
+# R Files
+*.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
+.DS_Store
+
+# Data
+*.dta
+*.csv Need CSVs for LNEx
+*.xls
+*.xlsx
+*.Rda
+*.rda
+*.Rds
+*.rds
+*.Rds
+*.Pdf
+
+# Specific Files
+api_keys.csv
+/*generate_passwords_for_crashmap.R
+Code/Dashboards/generate_passwords_for_crashmap.R
+
+
