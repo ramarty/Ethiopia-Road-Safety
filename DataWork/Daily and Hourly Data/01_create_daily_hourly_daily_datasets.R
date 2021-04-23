@@ -29,7 +29,7 @@ traffic_df <- traffic_df %>%
 
 ## Crashes
 crashes_df <- crashes_df %>%
-  filter(!is.na(direction)) %>%
+  dplyr::filter(!is.na(direction)) %>%
   mutate(date_hour = accident_datetime %>% round_date(unit = "hour")) %>%
   dplyr::rename(date = accident_date)
 
@@ -70,13 +70,13 @@ traffic_daily_df <- traffic_df[, list(N_vehicles = sum(one),
 
 #### Crashes
 crashes_hourly_df <- crashes_df %>%
-  filter(!is.na(date_hour)) %>%
-  group_by(date_hour, direction) %>%
+  dplyr::filter(!is.na(date_hour)) %>%
+  dplyr::group_by(date_hour, direction) %>%
   dplyr::summarise(N_crashes = n())
 
 crashes_daily_df <- crashes_df %>%
-  filter(!is.na(date)) %>%
-  group_by(date, direction) %>%
+  dplyr::filter(!is.na(date)) %>%
+  dplyr::group_by(date, direction) %>%
   dplyr::summarise(N_crashes = n())
 
 #### Merge

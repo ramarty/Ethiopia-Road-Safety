@@ -83,7 +83,7 @@ crashes_df$accident_datetime <- paste0(crashes_df$accident_date, " ",
                                        crashes_df$time_of_accident_hour, ":",
                                        crashes_df$time_of_accident_minute, " ") %>%
   str_squish() %>%
-  ymd_hm()
+  ymd_hm(tz = "Africa/Nairobi")
 
 crashes_df$time_of_accident <- NULL
 crashes_df$ampm <- NULL

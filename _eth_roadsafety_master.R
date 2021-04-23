@@ -40,6 +40,7 @@ library(gridExtra)
 library(xtable)
 library(ggmap)
 library(lfe)
+library(lubridate)
 
 source(file.path(functions_dir, "turning_angle.R"))
 
