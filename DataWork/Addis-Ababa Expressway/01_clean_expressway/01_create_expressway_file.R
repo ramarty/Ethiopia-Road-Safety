@@ -7,11 +7,11 @@ rsdp <- readOGR(file.path(rsdp_dir, "RawData", "All_Network_2016.shp"))
 addis_adama_express <- rsdp[rsdp$LINKNAME %in% "Addis - Adama (Toll Road)",]
 
 # Export -----------------------------------------------------------------------
-saveRDS(addis_adama_express, file.path(aae_dir, "Data", "addis_adama_express.Rds"))
+saveRDS(addis_adama_express, file.path(aae_dir, "Data", "expressway", "addis_adama_express.Rds"))
 
 addis_adama_express %>% 
   st_as_sf() %>%
-  st_write(file.path(aae_dir, "Data", "addis_adama_express.geojson"),
+  st_write(file.path(aae_dir, "Data", "expressway", "addis_adama_express.geojson"),
            delete_dsn = T)
 
 

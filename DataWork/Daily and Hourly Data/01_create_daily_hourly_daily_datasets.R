@@ -1,4 +1,12 @@
-# Ethiopia Road Safety: Merge Accident and Traffic Data into Daily and Hourly Datasets
+# Merge Accident and Traffic Data into Daily and Hourly Datasets. Creates a 
+# dataset at the daily/hourly level that indicates, for each time unit, 
+# (1) number of vehicles, (2) typical speed of vehicles, (3) number of crashes
+# (4) other variables (precipitation, temperature, etc)
+
+# TODO: Current precipitation is at daily level, so hourly dataset just indicates
+# precipitation at the daily level (same value for each day). Need to find
+# an hourly (or something more granular) precipitation dataset, so we can have
+# houly precipitation values. 
 
 # Load Data --------------------------------------------------------------------
 crashes_df  <- readRDS(file.path(etre_crashes_dir, "FinalData", "crashes.Rds"))
@@ -7,26 +15,32 @@ precip_df   <- readRDS(file.path(precip_dir, "FinalData", "precipitation.Rds"))
 holidays_df <- read.csv(file.path(holidays_dir, "RawData", "eth_holidays.csv"))
 
 # Prep Datasets ----------------------------------------------------------------
+## Traffic
 traffic_df <- traffic_df %>%
   dplyr::select(trans_occur_time,
                 speed_km_hr,
                 direction) %>%
   filter(!is.na(trans_occur_time),
-         trans_occur_time >= as.Date("2015-01-01"),
+         trans_occur_time >= as.Date("2015-01-01"), # removes wrong dates (eg, 1899)
          !is.na(direction)) %>%
   mutate(date     = trans_occur_time %>% round_date(unit = "day"),
          date_hour = trans_occur_time %>% round_date(unit = "hour"),
          one = 1)
 
+## Crashes
 crashes_df <- crashes_df %>%
   filter(!is.na(direction)) %>%
   mutate(date_hour = accident_datetime %>% round_date(unit = "hour")) %>%
   dplyr::rename(date = accident_date)
 
+## Precipitation
+# Each date could have multiple locations (different parts of Expressway); just
+# consider average values for all locations
 precip_df <- precip_df %>%
   group_by(date) %>%
   dplyr::summarise(precip_mm = mean(precip_mm, na.rm = T))
 
+## Holidays
 holidays_df <- holidays_df %>%
   mutate(date = date %>% mdy,
          holiday = 1) %>%
@@ -113,16 +127,13 @@ daily_df  <- merge(daily_df,  holidays_df_pm2day, all.x=T, all.y=F, by="date")
 hourly_df <- merge(hourly_df, holidays_df_pm2day, all.x=T, all.y=F, by="date")
 
 # Cleanup ----------------------------------------------------------------------
-# TODO: N_vehicles and speed replace_na for hourly
 daily_df <- daily_df %>%
-  dplyr::mutate(holiday   = holiday %>% replace_na(0),
-                N_crashes = N_crashes %>% replace_na(0),
-                crash     = as.numeric(N_crashes >= 1))
+  dplyr::mutate(crash = as.numeric(N_crashes >= 1)) %>%
+  dplyr::mutate_at(vars(N_vehicles, contains("holiday"), contains("N_crashes")), replace_na, 0)
 
 hourly_df <- hourly_df %>%
-  dplyr::mutate(holiday   = holiday %>% replace_na(0),
-                N_crashes = N_crashes %>% replace_na(0),
-                crash     = as.numeric(N_crashes >= 1))
+  dplyr::mutate(crash = as.numeric(N_crashes >= 1)) %>%
+  dplyr::mutate_at(vars(N_vehicles, contains("holiday"), contains("N_crashes")), replace_na, 0)
 
 # When don't have crash dataset, make NA
 max_crash_date <- crashes_df$date %>% max(na.rm=T)

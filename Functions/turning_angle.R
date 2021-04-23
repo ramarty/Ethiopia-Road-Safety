@@ -62,7 +62,7 @@ anglefun <- function(xx,yy,bearing=TRUE,as.deg=FALSE){
 }
 
 
-determine_turn_angle <- function(i, turn_angle_window){
+determine_turn_angle <- function(i, addis_adama_points, turn_angle_window){
   
   indices <- c((i-turn_angle_window),i,(i+turn_angle_window))
   if((TRUE %in% (indices < 0)) | (TRUE %in% (indices > nrow(addis_adama_points)))){

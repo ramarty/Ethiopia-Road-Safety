@@ -14,7 +14,7 @@ rsdp_dir         <- file.path(data_dir, "RSDP Roads")
 aae_dir          <- file.path(data_dir, "Addis Adama Expressway")
 precip_dir       <- file.path(data_dir, "Precipitation")
 holidays_dir     <- file.path(data_dir, "Holidays")
-dailyhourly_dir  <- file.path(data_dir, "Daily Hourly Datasets")
+dailyhourly_dir  <- file.path(data_dir, "Daily and Hourly Data")
 
 ## Github Directories
 functions_dir <- file.path(github_dir, "Functions")
@@ -39,6 +39,7 @@ library(grid)
 library(gridExtra)
 library(xtable)
 library(ggmap)
+library(lfe)
 
 source(file.path(functions_dir, "turning_angle.R"))
 

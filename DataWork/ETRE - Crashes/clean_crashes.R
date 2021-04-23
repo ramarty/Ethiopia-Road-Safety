@@ -90,10 +90,14 @@ crashes_df$ampm <- NULL
 
 # 4. Clean Location ------------------------------------------------------------
 ## Load expressway point
-addis_adama_points <- readRDS(file.path(aae_dir, "Data", "addis_adama_express_points.Rds"))
+addis_adama_points <- readRDS(file.path(aae_dir, "Data", "expressway", "aae_points.Rds"))
 
 addis_adama_points <- addis_adama_points %>%
   dplyr::select(distance_from_addis, latitude, longitude)
+
+## Fixes to accident_location
+crashes_df$accident_location[crashes_df$accident_location %in% "06730"] <- NA
+crashes_df$accident_location[crashes_df$accident_location %in% "07340"] <- NA
 
 ## Calculate distance from Addis for crashes
 loc_to_distance <- function(loc){
@@ -106,7 +110,8 @@ loc_to_distance <- function(loc){
   return(loc.dist)
 }
 
-crashes_df$distance_from_addis <- map_dbl(crashes_df$accident_location, loc_to_distance)
+crashes_df$distance_from_addis <- map_dbl(crashes_df$accident_location, loc_to_distance) %>%
+  round(digits = -1) # rount to the nearest "10"
 
 ## Merge by distance_from_addis
 crashes_df <- merge(crashes_df, addis_adama_points, by = "distance_from_addis", all.x=T, all.y=F)
