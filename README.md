@@ -18,7 +18,7 @@ Define large or commonly used functions here
 
 ## Dashboards
 
-Dashboards for the projrect
+Dashboards for the project
 
 
 
