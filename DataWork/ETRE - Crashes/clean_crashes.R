@@ -371,8 +371,6 @@ crashes_df <- crashes_df %>%
                                              "other") ~ "other"),
          type_of_accident_simple = type_of_accident_simple %>% replace_na("unspecified"))
 
-#crashes_df$type_of_accident[crashes_df$type_of_accident_simple %in% "unspecified"] %>% unique()
-
 ##### ** 6.3 Accident Cuase - Human/Vehicle #####
 crashes_df <- crashes_df %>%
   mutate(accident_cause_vehicle_human = 

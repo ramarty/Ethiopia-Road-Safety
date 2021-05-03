@@ -116,15 +116,18 @@ traffic_df$direction <- ifelse(traffic_df$ent_plaza_id < traffic_df$plaza_id, "t
 
 
 # 6. Export --------------------------------------------------------------------
-saveRDS(traffic_df, file = file.path(etre_traffic_dir, "FinalData", "traffic.Rds"))
+saveRDS(traffic_df, file.path(etre_traffic_dir, "FinalData", "traffic.Rds"))
+write.csv(traffic_df, file.path(etre_traffic_dir, "FinalData", "traffic.csv"), row.names = F)
 
 ## Export limited dataset, with only select variables
-traffic_df %>%
+traffic_df_lim <- traffic_df %>%
   dplyr::select(entrance_km, 
                 ent_occur_time,
                 trans_occur_time,
                 direction,
                 speed_km_hr, 
-                exit_km) %>%
-  saveRDS(file = file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
+                exit_km) 
+
+saveRDS(traffic_df_lim, file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.Rds"))
+write.csv(traffic_df_lim, file.path(etre_traffic_dir, "FinalData", "traffic_limitedvars.csv"), row.names = F)
 
