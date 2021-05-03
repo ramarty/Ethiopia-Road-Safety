@@ -62,12 +62,12 @@ crashes_df <- crashes_df %>%
          time_of_accident_minute = time_of_accident_minute %>% as.numeric)
 
 ## Determine AM or PM
-# TODO: If "night" but hour is "1", should this be "am"?
 crashes_df$ampm <- NA
 crashes_df$ampm[grepl("am$", crashes_df$time_of_accident)] <- "am"
 crashes_df$ampm[grepl("pm$", crashes_df$time_of_accident)] <- "pm"
 crashes_df$ampm[grepl("morning", crashes_df$time_of_accident)] <- "am"
 crashes_df$ampm[grepl("nitght|night|evening", crashes_df$time_of_accident)] <- "pm"
+crashes_df$ampm[grepl("night", crashes_df$time_of_accident) & grepl("^1፡|01፡", crashes_df$time_of_accident)] <- "am"
 crashes_df$ampm[grepl("day", crashes_df$time_of_accident) & crashes_df$time_of_accident_hour %in% 7:11]       <- "am"
 crashes_df$ampm[grepl("day", crashes_df$time_of_accident) & crashes_df$time_of_accident_hour %in% c(12, 1:6)] <- "pm"
 crashes_df$ampm[is.na(crashes_df$ampm) & !is.na(crashes_df$time_of_accident)] <- "am"
