@@ -50,8 +50,8 @@ crashes_df <- crashes_df %>%
   mutate(time_of_accident_num = time_of_accident %>%
            str_replace_all("[a-z A-Z]", "")) %>%
   tidyr::separate(col = time_of_accident_num,
-           into = c("time_of_accident_hour", "time_of_accident_minute"),
-           remove = T) %>%
+                  into = c("time_of_accident_hour", "time_of_accident_minute"),
+                  remove = T) %>%
   mutate(time_of_accident_minute = case_when((is.na(time_of_accident_minute) & 
                                                 !is.na(time_of_accident_hour)) ~ "00",
                                              TRUE ~ time_of_accident_minute)) %>%
@@ -62,12 +62,14 @@ crashes_df <- crashes_df %>%
          time_of_accident_minute = time_of_accident_minute %>% as.numeric)
 
 ## Determine AM or PM
+crashes_df$time_of_accident_hour[grepl("nitght|night", crashes_df$time_of_accident)] %>% table()
+
 crashes_df$ampm <- NA
 crashes_df$ampm[grepl("am$", crashes_df$time_of_accident)] <- "am"
 crashes_df$ampm[grepl("pm$", crashes_df$time_of_accident)] <- "pm"
 crashes_df$ampm[grepl("morning", crashes_df$time_of_accident)] <- "am"
 crashes_df$ampm[grepl("nitght|night|evening", crashes_df$time_of_accident)] <- "pm"
-crashes_df$ampm[grepl("night", crashes_df$time_of_accident) & grepl("^1፡|01፡", crashes_df$time_of_accident)] <- "am"
+crashes_df$ampm[grepl("nitght|night", crashes_df$time_of_accident) & crashes_df$time_of_accident_hour %in% 1:2] <- "am"
 crashes_df$ampm[grepl("day", crashes_df$time_of_accident) & crashes_df$time_of_accident_hour %in% 7:11]       <- "am"
 crashes_df$ampm[grepl("day", crashes_df$time_of_accident) & crashes_df$time_of_accident_hour %in% c(12, 1:6)] <- "pm"
 crashes_df$ampm[is.na(crashes_df$ampm) & !is.na(crashes_df$time_of_accident)] <- "am"
@@ -89,6 +91,8 @@ crashes_df$time_of_accident <- NULL
 crashes_df$ampm <- NULL
 
 # 4. Clean Location ------------------------------------------------------------
+crashes_df$accident_location_original <- crashes_df$accident_location
+
 ## Load expressway point
 addis_adama_points <- readRDS(file.path(aae_dir, "Data", "expressway", "aae_points.Rds"))
 
@@ -98,6 +102,77 @@ addis_adama_points <- addis_adama_points %>%
 ## Fixes to accident_location
 crashes_df$accident_location[crashes_df$accident_location %in% "06730"] <- NA
 crashes_df$accident_location[crashes_df$accident_location %in% "07340"] <- NA
+crashes_df$accident_location[crashes_df$accident_location %in% "15-760"] <- "15+760"
+crashes_df$accident_location[crashes_df$accident_location %in% "10፡480"] <- "10+480"
+crashes_df$accident_location[crashes_df$accident_location %in% "ከ-2 ኤግዚት -4"] <-  "2"
+crashes_df$accident_location[crashes_df$accident_location %in% "60A curve"] <-  "60"
+crashes_df$accident_location[crashes_df$accident_location %in% "60 A curve"] <-  "60"
+crashes_df$accident_location[crashes_df$accident_location %in% "60ለ Exit"] <-  "60"
+crashes_df$accident_location[crashes_df$accident_location %in% "35-325"] <-  "35+325"
+crashes_df$accident_location[crashes_df$accident_location %in% "50M far from K-33 EX"] <-  "33"
+crashes_df$accident_location[crashes_df$accident_location %in% "60B EN"] <-  "60"
+crashes_df$accident_location[crashes_df$accident_location %in% "K33 EN"] <-  "33"
+crashes_df$accident_location[crashes_df$accident_location %in% "K52 EN"] <-  "52"
+crashes_df$accident_location[crashes_df$accident_location %in% "K-60B EN"] <-  "60"
+crashes_df$accident_location[crashes_df$accident_location %in% "K.M42"] <-  "42"
+
+## Extract text from location 
+crashes_df$accident_location_text <- crashes_df$accident_location %>%
+  tolower() %>%
+  str_replace_all("[:digit:]", "") %>%
+  str_replace_all("\\+", "") %>%
+  str_replace_all("-", " ") %>%
+  str_replace_all("\\b[:alpha:]\\b", "") %>% # single letters (eg, k)
+  str_squish()
+
+## Cleanup Location
+crashes_df$accident_location <- crashes_df$accident_location %>%
+  tolower() %>%
+  str_squish() %>%
+  str_replace_all("ኬ-", "k-") %>%
+  str_replace_all("ከ-", "k-") %>%
+  str_replace_all("ኬ", "k") %>%
+  str_replace_all("exit [:digit:][:digit:]", "") %>%
+  str_replace_all("exit [:digit:]", "") %>%
+  str_replace_all("exit-[:digit:][:digit:]", "") %>%
+  str_replace_all("exit-[:digit:]", "") %>%
+  str_replace_all("exit[:digit:][:digit:]", "") %>%
+  str_replace_all("exit[:digit:]", "") %>%
+  str_replace_all("ex-[:digit:][:digit:]", "") %>%
+  str_replace_all("ex-[:digit:]", "") %>%
+  str_replace_all("ex[:digit:][:digit:]", "") %>%
+  str_replace_all("ex[:digit:]", "") %>%
+  str_replace_all("entrance-[:digit:][:digit:]", "") %>%
+  str_replace_all("entrance-[:digit:]", "") %>%
+  str_replace_all("entrance -[:digit:][:digit:]", "") %>%
+  str_replace_all("entrance -[:digit:]", "") %>%
+  str_replace_all("entrance [:digit:][:digit:]", "") %>%
+  str_replace_all("entrance [:digit:]", "") %>%
+  str_replace_all("entrance[:digit:][:digit:]", "") %>%
+  str_replace_all("entrance[:digit:]", "") %>%
+  str_replace_all("curve", "") %>%
+  str_replace_all("curvy", "") %>%
+  str_replace_all("over load", "") %>%
+  str_replace_all("station", "") %>%
+  str_replace_all("stasion", "") %>%
+  str_replace_all("lay by", "") %>%
+  str_replace_all("access road", "") %>%
+  str_replace_all("overload", "") %>%
+  str_replace_all("squaer", "") %>%
+  str_replace_all("exit", "") %>%
+  str_replace_all("eixt", "") %>%
+  str_replace_all("ex", "") %>%
+  str_replace_all("junction", "") %>%
+  str_replace_all("b\\b", "") %>%
+  str_replace_all("\\(.*", "") %>%
+  str_replace_all("ማዞሪያ", "") %>% 
+  str_replace_all("t.*", "") %>% # "78 +t158" ; remove t and everything after   
+  str_replace_all("k- ", "") %>%
+  str_replace_all("k-", "") %>%
+  str_replace_all("^-", "") %>%
+  str_replace_all("^k", "") %>%
+  str_replace_all("a$", "") %>%
+  str_replace_all("-$", "")
 
 ## Calculate distance from Addis for crashes
 loc_to_distance <- function(loc){
@@ -296,8 +371,6 @@ crashes_df <- crashes_df %>%
                                              "other") ~ "other"),
          type_of_accident_simple = type_of_accident_simple %>% replace_na("unspecified"))
 
-#crashes_df$type_of_accident[crashes_df$type_of_accident_simple %in% "unspecified"] %>% unique()
-
 ##### ** 6.3 Accident Cuase - Human/Vehicle #####
 crashes_df <- crashes_df %>%
   mutate(accident_cause_vehicle_human = 
@@ -312,10 +385,9 @@ crashes_df <- crashes_df %>%
                      cause_of_accident_simple %in% c("animal crossing") ~ "other"))
 
 # 7. Export --------------------------------------------------------------------
+write.csv(crashes_df,   file.path(etre_crashes_dir, "FinalData", "crashes.csv"), row.names = F)
 saveRDS(crashes_df,   file.path(etre_crashes_dir, "FinalData", "crashes.Rds"))
 write_dta(crashes_df, file.path(etre_crashes_dir, "FinalData", "crashes.dta"))
-
-
 
 
 
