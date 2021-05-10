@@ -29,10 +29,6 @@ def transform_row(row):
     new_index = [pd.to_datetime(dt.strftime("%Y-%m-%d %H:%M:%S")) for dt in
                  datetime_range(ent_date, exit_date, timedelta(seconds=speed_sec_km))]
 
-    import pdb
-    pdb.set_trace()
-
-
     # define step direction (for when entrance_km > exit_km) for km_count:
     step_direction = int(n_km / abs(n_km))
     km_count = [j for j in range(int(row['entrance_km']), int(row['exit_km'] + step_direction), step_direction)]
