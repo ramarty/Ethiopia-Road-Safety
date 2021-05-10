@@ -18,7 +18,7 @@ precipitation_path = 'Precipitation/'
 precipitation_file = 'FinalData/precipitation.csv'
 
 # load data
-traffic_final = pd.read_parquet(data_path + traffic_path + traffic_file, engine='pyarrow')
+#traffic_final = pd.read_parquet(data_path + traffic_path + traffic_file, engine='pyarrow')
 precipitation_final = pd.read_csv(data_path + precipitation_path + precipitation_file)
 crashes_final = pd.read_csv(data_path + crashes_path + crash_file)
 
