@@ -1,6 +1,12 @@
 import pandas as pd
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 100)
+import numpy as np
+import pyreadr
+import datetime
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+from linearmodels.panel import PanelOLS
 
 # define paths:
 data_path = '/Users/simonneumeyer/Dropbox/Ethiopia IE - Road Safety/Data/'
@@ -62,10 +68,68 @@ relevant_crash_vars = ['distance_from_addis', 'case_no', 'date', 'day', 'hashed_
 crashes_final.date = pd.to_datetime(crashes_final.date)
 segment_time = segment_time.merge(crashes_final[relevant_crash_vars], how='left', on=['date', 'hour', 'km_from_addis'])
 
-# add crashes:
+# kick out NAs: (where we don't have accident data)
+segment_time = segment_time.dropna(subset=['accidents'])
+segment_time = segment_time.reset_index()
 
 
+# add traffic:
+traffic = pd.read_parquet(data_path + 'Time Segment Data/traffic_feature.pq', engine='pyarrow')
 
+# create km_from_addis variable:
+traffic['km_from_addis'] = traffic.km.apply(
+       lambda x: 1000 * (80.0-x))  # 80: assuming km in traffic data are from adama, not addis.
+traffic = traffic.rename({'tstamp': 'date', 'count': 'traffic'}, axis=1)
+
+# show why we drop some data:
+traffic.plot(x='date', y='traffic')
+plt.show()
+
+cond_1 = (traffic.date > pd.to_datetime('2014-11-30'))
+cond_2 = (traffic.date < pd.to_datetime('2015-04-30'))
+traffic[cond_1 & cond_2].plot(x='date', y='traffic')
+plt.show()
+# It seems that there is a 2-month gap of traffic data for January & February 2015.
+# We shall consider only traffic data after February 2015 (Before 2015 there is no accidents data anyway)
+
+# drop accident data older than March 2015:
+condition = (segment_time.date >= pd.to_datetime('2015-03-01'))
+segment_time = segment_time[condition]
+
+# merge traffic with accidents:
+segment_time = segment_time.merge(traffic, how='left', on=['date', 'hour', 'km_from_addis'])
+
+# Now that we removed missing data we can safely assume that remaining traffic NAs are incidents of
+# no traffic in that particular time-km segment:
+segment_time['traffic'] = segment_time['traffic'].fillna(0)
+
+
+# add hourly data:
+hourly = pd.read_stata(data_path + 'Daily and Hourly Data/FinalData/hourly.dta')
+hourly['hour'] = hourly.date_hour.apply(lambda x: x.hour)
+hourly = hourly.drop('precip_mm', axis=1)  # because we have it already in the master dataset
+
+# aggregate both directions (subject to change):
+hourly = hourly.groupby('date_hour').agg(
+    {
+    'speed_mean': 'mean', 'speed_p10': 'mean', 'crash': 'sum', 'speed_p25': 'mean',
+        'speed_p50': 'mean', 'speed_p75': 'mean', 'speed_p90': 'mean',
+        'N_crashes': 'sum', 'N_vehicles': 'sum', 'holiday': 'mean',
+        'holiday_plusminus_1day': 'mean', 'holiday_plusminus_2day': 'mean',
+        'hour': 'mean', 'date': 'min'
+    }
+).reset_index()
+
+# merge with time-segment panel:
+segment_time = segment_time.merge(hourly, how='left', on=['date', 'hour'], validate='many_to_one')
+
+
+# add additional features:
+# weekend dummy:
+segment_time['weekday'] = segment_time.date.apply(lambda x: x.weekday())
+segment_time = pd.get_dummies(segment_time, columns=['weekday'])
+segment_time['weekend'] = segment_time.apply(
+       lambda x: sum([x.weekday_4, x.weekday_5, x.weekday_6]), axis=1)
 
 
 # save dataset:
