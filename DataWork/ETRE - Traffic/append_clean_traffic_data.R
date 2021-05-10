@@ -112,8 +112,7 @@ traffic_df$exit_km[traffic_df$plaza_id %in% 504] <- 60
 traffic_df$exit_km[traffic_df$plaza_id %in% 602] <- 64
 
 # 5. Add Other Variables -------------------------------------------------------
-traffic_df$direction <- ifelse(traffic_df$ent_plaza_id < traffic_df$plaza_id, "to addis", "to adama")
-
+traffic_df$direction <- ifelse(traffic_df$ent_plaza_id > traffic_df$plaza_id, "to addis", "to adama")
 
 # 6. Export --------------------------------------------------------------------
 saveRDS(traffic_df, file.path(etre_traffic_dir, "FinalData", "traffic.Rds"))
