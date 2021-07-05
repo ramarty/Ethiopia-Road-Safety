@@ -1,0 +1,11 @@
+
+Article 1:
+https://towardsdatascience.com/using-machine-learning-to-predict-car-accidents-44664c79c942
+
+Data: UK road accidents database (no non-accident data)
+Features: Casualty characteristics, Situational Variables, Accident & Vehicle descriptors
+Goal: Create model that can differentiate between severe and non-severe accidents/injuries
+- Makes it easier since they can use a lot of accident/car/casualty related features that we cannot use.
+
+Models they used:
+    - Logistic regression
