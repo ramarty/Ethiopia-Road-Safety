@@ -15,8 +15,9 @@ aae_points <- aae %>%
   as.data.frame() %>%
   dplyr::rename(longitude = coords.x1,
                 latitude  = coords.x2) %>%
-  mutate(distance_from_addis = 1:n()*10)
+  dplyr::mutate(distance_from_addis = 1:n()*10)
 
 # Export -----------------------------------------------------------------------
 saveRDS(aae_points, file.path(aae_dir, "Data", "expressway", "aae_points.Rds"))
+write.csv(aae_points, file.path(aae_dir, "Data", "expressway", "aae_points.csv"), row.names = F)
 
